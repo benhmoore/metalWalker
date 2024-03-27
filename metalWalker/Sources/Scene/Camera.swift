@@ -1,28 +1,31 @@
 import simd
 
-struct Camera {
+class Camera {
     var position: SIMD3<Float>
     var lookAt: SIMD3<Float>
     var up: SIMD3<Float>
     var fieldOfView: Float
     var aspectRatio: Float
+    
+    init(position: SIMD3<Float>, lookAt: SIMD3<Float>, up: SIMD3<Float>, fieldOfView: Float, aspectRatio: Float) {
+        self.position = position
+        self.lookAt = lookAt
+        self.up = up
+        self.fieldOfView = fieldOfView
+        self.aspectRatio = aspectRatio
+    }
 
     func generateRay(forPixelAt x: Int, y: Int, imageWidth: Int, imageHeight: Int) -> Ray {
-        let theta = fieldOfView * .pi / 180
-        let halfHeight = tan(theta / 2)
-        let halfWidth = aspectRatio * halfHeight
+        let aspectRatio = Float(imageWidth) / Float(imageHeight)
+        let pixelNDCX = (Float(x) + 0.5) / Float(imageWidth)
+        let pixelNDCY = (Float(y) + 0.5) / Float(imageHeight)
         
-        let w = normalize(position - lookAt)
-        let u = normalize(cross(up, w))
-        let v = cross(w, u)
+        let pixelScreenX = (2.0 * pixelNDCX - 1.0) * aspectRatio
+        let pixelScreenY = 1.0 - 2.0 * pixelNDCY
         
-        let pixelWidth = 2.0 * halfWidth / Float(imageWidth)
-        let pixelHeight = 2.0 * halfHeight / Float(imageHeight)
-
-        let pixelX = (Float(x) + 0.5) * pixelWidth - halfWidth
-        let pixelY = (Float(y) + 0.5) * pixelHeight - halfHeight
-
-        let direction = normalize(pixelX * u - pixelY * v - w)
-        return Ray(origin: position, direction: direction)
+        let rayDirection = normalize(SIMD3<Float>(pixelScreenX, pixelScreenY, -1))
+        
+        return Ray(origin: position, direction: rayDirection)
     }
 }
+

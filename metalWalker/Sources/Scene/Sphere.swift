@@ -1,4 +1,10 @@
+import Metal
 import simd
+
+struct GPUSphere {
+    var position: SIMD3<Float>
+    var radius: Float
+}
 
 struct Sphere: Renderable {
     var transformComponent: TransformComponent
@@ -21,5 +27,13 @@ struct Sphere: Renderable {
             }
         }
         return nil
+    }
+}
+
+// Maps Sphere renderables to GPU-friendly GPUSpheres
+extension MetalContext {
+    func makeSphereBuffer(spheres: [Sphere]) -> MTLBuffer? {
+        let gpuSpheres = spheres.map { GPUSphere(position: $0.transformComponent.transform.position, radius: $0.radius) }
+        return device.makeBuffer(bytes: gpuSpheres, length: gpuSpheres.count * MemoryLayout<GPUSphere>.stride, options: [])
     }
 }
